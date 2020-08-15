@@ -26,38 +26,51 @@ namespace PrintServer
         {
             while (!_cancellationToken.IsCancellationRequested)
             {
-                var showMessage = true;
-
-                while (_queue.IsEmpty() && !_cancellationToken.IsCancellationRequested)
-                {
-                    if (showMessage)
-                        Console.WriteLine("[Printer] Esperando por trabalho de impressão...");
-
-                    await Task.Delay(TimeSpan.FromSeconds(1));
-
-                    showMessage = false;
-                }
+                await WaitQueue();
 
                 if (_cancellationToken.IsCancellationRequested)
                     break;
 
-                var printJob = _queue.RemoveFront();
-
-                Console.WriteLine($"[Printer] Imprimindo '{printJob.Name}'...");
-
-                var totalTime = printJob.NumberOfPages * MillisecondPerPage;
-
-                await Task.Delay(TimeSpan.FromMilliseconds(totalTime));
-
-                Console.WriteLine($"[Printer] '{printJob.Name}' ok.");
+                await Print();
             }
 
-            Console.WriteLine("[Printer] Desligando impressora...");
+            Console.WriteLine("[Printer] Impressora desligada...");
+        }
+
+        private async Task WaitQueue()
+        {
+            var showMessage = true;
+
+            while (_queue.IsEmpty() && !_cancellationToken.IsCancellationRequested)
+            {
+                if (showMessage)
+                    Console.WriteLine("[Printer] Esperando por trabalho de impressão...");
+
+                await Task.Delay(TimeSpan.FromSeconds(1));
+
+                showMessage = false;
+            }
+
+            await Task.CompletedTask;
+        }
+
+        private async Task Print()
+        {
+            var printJob = _queue.RemoveFront();
+
+            Console.WriteLine($"[Printer] Imprimindo '{printJob.Name}'...");
+
+            var totalTime = printJob.NumberOfPages * MillisecondPerPage;
+
+            await Task.Delay(TimeSpan.FromMilliseconds(totalTime));
+
+            Console.WriteLine($"[Printer] '{printJob.Name}' ok.");
         }
 
         public void Halt()
         {
             _cancellationToken.Cancel();
+            _cancellationToken.Dispose();
         }
     }
 }

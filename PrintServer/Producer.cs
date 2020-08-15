@@ -9,23 +9,20 @@ namespace PrintServer
         public string Name { get; }
 
         private readonly IQueue _queue;
-        private readonly CancellationTokenSource _cancellationToken;
 
         private static readonly Random Random = new Random();
 
-        public Producer(string name, IQueue queue, CancellationTokenSource cancellationToken)
+        public Producer(string name, IQueue queue)
         {
             Name = name;
             _queue = queue;
-
-            _cancellationToken = cancellationToken;
         }
 
-        public async Task StartProducingAsync(int numberOfFiles)
+        public async Task StartProducingAsync(int numberOfFiles, CancellationToken cancellationToken)
         {
             var i = 0;
 
-            while (!_cancellationToken.IsCancellationRequested && i < numberOfFiles)
+            while (!cancellationToken.IsCancellationRequested && i < numberOfFiles)
             {
                 var fileName = $"{Guid.NewGuid()}.txt";
                 var number = Random.Next(1, 50);
@@ -40,14 +37,13 @@ namespace PrintServer
                 }
                 catch (FullQueueException)
                 {
+                    // TODO: Tentar novamente, gravar logs, etc...
                     Console.WriteLine($"#{Name}# FullQueueException");
                 }
-                finally
-                {
-                    var delay = Random.Next(1, 5);
 
-                    await Task.Delay(TimeSpan.FromSeconds(delay));
-                }
+                var delay = Random.Next(1, 5);
+
+                await Task.Delay(TimeSpan.FromSeconds(delay));
 
                 i++;
             }
