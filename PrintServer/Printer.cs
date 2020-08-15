@@ -50,8 +50,6 @@ namespace PrintServer
 
                 showMessage = false;
             }
-
-            await Task.CompletedTask;
         }
 
         private async Task Print()
