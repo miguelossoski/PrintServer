@@ -6,7 +6,6 @@ namespace PrintServer
     public class CircularQueue : IQueue
     {
         private readonly ConcurrentQueue<PrintJob> _jobs;
-        private readonly object _lockObject;
 
         public int Capacity { get; }
 
@@ -15,18 +14,14 @@ namespace PrintServer
             Capacity = capacity;
 
             _jobs = new ConcurrentQueue<PrintJob>();
-            _lockObject = new object();
         }
 
         public void AddBack(PrintJob job)
         {
-            lock (_lockObject)
-            {
-                if (GetNumberOfJobs() == Capacity)
-                    throw new FullQueueException();
+            if (GetNumberOfJobs() == Capacity)
+                throw new FullQueueException();
 
-                _jobs.Enqueue(job);
-            }
+            _jobs.Enqueue(job);
         }
 
         public int GetNumberOfJobs()
